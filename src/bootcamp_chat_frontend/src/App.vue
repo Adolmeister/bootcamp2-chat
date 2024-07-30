@@ -12,20 +12,26 @@ export default {
       newChat: "",
       chats: [] as string[][],
       identity: undefined as undefined | Identity,
-      principalText: "",
+      principal: undefined as undefined | Principal,
       targetPrincipal: "",
     }
   },
   methods: {
-    async dodajChatMSG() {
-      if (!this.identity || this.identity.getPrincipal() === Principal.anonymous()) {
-        throw new Error("log in")
+    isUserLogged() {
+      if (!this.identity || !this.principal || this.principal === Principal.anonymous()) {
+        throw new Error("log in bro")
       }
+      return {
+        identity: this.identity,
+        principal: this.principal 
+      }
+    },
+    async dodajChatMSG() {
+      this.isUserLogged()
       const targetPrincipal = Principal.fromText(this.targetPrincipal)
       if (!targetPrincipal || targetPrincipal === Principal.anonymous()){
         throw new Error("Wrong target")
       }
-
       const backend = createActor(canisterId, {
         agentOptions: {
           identity: this.identity
@@ -35,14 +41,15 @@ export default {
       await this.pobierzChaty()
     },
     async pobierzChaty() {
-      if (!this.identity || this.identity.getPrincipal() === Principal.anonymous()) {
-        throw new Error("log in")
-      }
+      const {identity, principal} = this.isUserLogged()
       const targetPrincipal = Principal.fromText(this.targetPrincipal)
       if (!targetPrincipal || targetPrincipal === Principal.anonymous()){
         throw new Error("Wrong target")
       }
-      this.chats = await bootcamp_chat_backend.get_chat(this.identity.getPrincipal(), targetPrincipal)
+      const chatPath = [identity.getPrincipal(), targetPrincipal]
+      chatPath.sort()
+
+      this.chats = await bootcamp_chat_backend.get_chat(chatPath)
     },
     async login() {
       const authClient = await AuthClient.create();
@@ -51,21 +58,20 @@ export default {
       })
 
       const identity = authClient.getIdentity();
-      this.principalText = identity.getPrincipal().toText()
-      console.log("Zalogowano", this.principalText)
+      this.principal = identity.getPrincipal();
+      console.log("zalogowano", this.principal)
       this.identity = identity;
       await this.pobierzChaty()
     }
   },
 }
 </script>
-
 <template>
   <main>
     <img src="/logo2.svg" alt="DFINITY logo" />
     <br />
     <br />
-    {{ principalText }} <button @click="login">login</button>
+    {{ principal }} <button @click="login">login</button>
     <div>
       <input v-model="targetPrincipal" /><button @click="pobierzChaty">pobierz chat</button>
     </div>
