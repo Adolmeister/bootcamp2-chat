@@ -19,7 +19,7 @@ export default {
   methods: {
     isUserLogged() {
       if (!this.identity || !this.principal || this.principal === Principal.anonymous()) {
-        throw new Error("log in bro")
+        throw new Error("PLZ log in")
       }
       return {
         identity: this.identity,
@@ -66,8 +66,7 @@ export default {
           const identity = authClient.getIdentity();
           this.principal = identity.getPrincipal();
           this.identity = identity;
-          console.log("zalogowano", this.principal)
-          await this.pobierzChaty()
+          console.log("Zalogowano", this.principal)
         }
       })
     }
